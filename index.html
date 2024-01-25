@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue.js Music Player</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+
+</head>
+<body>
+
+<div id="app" >
+    <h1>Vue.js Music Player</h1>
+    <div id="drop-area" @dragover.prevent="handleDragOver" @drop="handleDrop" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragging }">
+        <p>Drag and drop music files here.</p>
+    </div>
+
+    
+    <!-- <div id="google-drive-import">
+      <input type="text" id="google-drive-link" placeholder="Paste Google Drive file link here">
+      <button id="import-from-google-drive" @click="importFromGoogleDrive">Import</button>
+    </div> -->
+
+    <div id="main-container">
+        <div id="current-track">
+            <p v-if="currentTrack">{{ currentTrack.title }}</p>
+            <p v-else>No tracks in playlist</p>
+            <!-- <div id="album-art"></div> -->
+            <div id="controls" ref="controls" :class="{ 'disabled': !isTrackPlaying }">
+              
+              <div id="volume-container" @mouseover="showSlider" @mouseleave="hideSlider">
+                <button id="volume" ref="volume" @click="toggleMute" :class="{ 'disabled': !isTrackPlaying }">
+                  <i v-if="isMuted || volume === 0" class="fas fa-volume-mute"></i>
+                  <i v-else class="fas fa-volume-up"></i>
+                </button>
+                <div id="volume-slider" v-show="showVolumeSlider" :class="{ 'isTrackPlaying': isTrackPlaying }">
+                  <input type="range" @input="setVolume($event.target.value)" min="0" max="1" step="0.01" v-model="volume">
+                </div>
+              </div>
+              
+              <button id="previous" @click="playPrevious"><i class="fas fa-step-backward"></i></button>
+              <button id="PlayPause" @click="togglePlayPause" :class="isPlaying ? 'pause-button' : 'play-button'">
+                  <i v-if="isPlaying" class="fa-solid fa-pause"></i>
+                  <i v-else class="fa-solid fa-play"></i>
+              </button>
+              <button id="next" @click="playNext"><i class="fas fa-step-forward"></i></button>
+              <button id="repeat" @click="toggleRepeat" :class="{ 'disabled': !isTrackPlaying, 'active': isRepeating }">
+                <i class="fa-solid fa-repeat"></i>
+              </button>
+            </div>
+            
+            <div id="progress-container">
+              <span>{{ formattedCurrentTime }}</span>
+              <div id="progress-bar" :class="{ 'disabled': !isTrackPlaying }" ref="progressBar" @click="setProgress($event)">
+                <div id="progress" v-if="isTrackPlaying" :style="{ width: progress + '%' }">
+                  <!-- <div class="progress-non-loop" :style="{ width: isLoopEnabled ? loopStartPercent + '%' : progress + '%' }"></div> -->
+                  <div class="progress-non-loop" :style="{ width: shouldUpdateProgressBar ? loopStartPercent + '%' : progress + '%' }"></div>
+                  <div v-if="showLoopSection" class="loop-section" :style="{ left: loopStartPercent + '%', right: (100 - loopEndPercent) + '%' }"></div>
+                  <div id="slider-handle" v-if="isTrackPlaying" :style="{ left: progress + '%' }"></div>
+                </div>
+              </div>
+              <span>{{ formattedDuration }}</span>
+            </div>
+        </div>
+        <div id="playlist">
+            <ul v-if="playlist.length > 0">
+              <li v-for="(track, index) in playlist" :key="index" @click="playTrack(index)"
+                @dragstart="dragStartItem(index, $event)"
+                @dragover.prevent="dragEnterItem(index, $event)"
+                @dragend="dragEndItem"
+                draggable="true"
+                :class="{ 'playing': index === currentTrackIndex, 'dragging': draggingItemIndex === index }" >
+                {{ track.title }}
+              </li>
+            </ul>
+            <p v-else>No tracks in the playlist.</p>
+        </div>
+    </div>
+
+    <div id="loop-speed-container">
+      <div id="loop-container">
+        <input type="checkbox" id="enable-loop" v-model="isLoopEnabled">
+        <label for="enable-loop">Loop: </label>
+        <input type="number" ref="loopStartInput" v-model.number="inputLoopStart" placeholder="Start from...">
+        to
+        <input type="number" ref="loopEndInput" v-model.number="inputLoopEnd" placeholder="End with...">
+        <button @click="applyLoopSettings">Enter</button>
+      </div>
+
+      <div id="speed-container">
+        <label for="playback-speed">Speed: </label>
+        <select id="playback-speed" v-model="playbackSpeed">
+            <option value="0.25">0.25</option>
+            <option value="0.5">0.5</option>
+            <option value="0.75">0.75</option>
+            <option value="1">Normal</option>
+            <option value="1.25">1.25</option>
+            <option value="1.5">1.5</option>
+            <option value="1.75">1.75</option>
+            <option value="2">2</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- <audio controls ref="audioPlayer" @timeupdate="handleTimeUpdate" @durationchange="updateLoopPercentages"> -->
+      <audio controls ref="audioPlayer" @timeupdate="handleTimeUpdate">
+        <source :src="currentTrack.url" type="audio/mp3">
+        Your browser does not support the audio tag.
+    </audio>
+
+    <table>
+      <tr>
+        <th>Keyboard Shortcuts</th>
+        <th>Function</th>
+      </tr>
+      <tr>
+        <td>Space</td>
+        <td>Play/Pause</td>
+      </tr>
+      <tr>
+        <td>&larr; &rarr;</td>
+        <td>Seek backward/forward 5 seconds.</td>
+      </tr>
+      <tr>
+        <td>&uarr; &darr;</td>
+        <td>Increase/Decrease volume 5%.</td>
+      </tr>
+      <tr>
+        <td>Shift+P / Shift+N</td>
+        <td>Move to previous/next song.</td>
+      </tr>
+      <tr>
+        <td>R</td>
+        <td>Repeat current song.</td>
+      </tr>
+      <tr>
+        <td>Number 0 to 9</td>
+        <td>Seek to the 0% to 90% of the video.</td>
+      </tr>
+      <tr>
+        <td>L</td>
+        <td>Turn up loop.</td>
+      </tr>
+      <tr>
+        <td>>/<</td>
+        <td>Speed up/Slow down the video playback rate.</td>
+      </tr>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

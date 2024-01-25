@@ -1,0 +1,469 @@
+*{
+  /* border: 1px solid #000; */
+}
+
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  /* justify-content: center; */
+  align-items: center;
+  background-color: #ddd;
+}
+
+
+
+/* -- DROP-AREA -- */
+
+#drop-area {
+  border: 2px dashed #ccc;
+  box-sizing: border-box;
+  padding: 20px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+  width: 800px;
+  font-size: 20px;
+  margin-bottom: 20px;
+  background-color: white;
+  border-radius: 25px;
+}
+
+#drop-area.drag-over {
+  background-color: #ddd;
+}
+
+
+/* -- MAIN CONTAINER -- */
+
+#main-container {
+  width: 800px;
+  height: 300px;
+  border: 1px solid #000;
+  border-radius: 25px;
+  background-color: white;
+
+  box-sizing: border-box;
+  display: flex;
+  /* height: 100%; */
+}
+
+/* -- PLAYER CONTAINER -- */
+
+#player-container {
+  
+}
+
+#current-track {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-right: 1px solid #000;
+}
+
+#current-track p {
+  font-size: 25px;
+  position: absolute;
+  top: 10%;
+  transform: translate(0, -50%);
+}
+
+#album-art {
+  width: 200px;
+  height: 200px;
+  background-color: #eee;
+  position: absolute;
+  top: 50%;
+  transform: translate(0, -50%);
+}
+
+/* -- CONTROLS -- */
+
+#controls {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  position: absolute;
+  /* bottom: 15%; */
+  top: 50%;
+  transform: translate(0, -50%);
+  width: 100%;
+  z-index: 2;
+}
+
+
+#controls button:not(#volume,#repeat) {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: white;
+  border: 1px solid black;
+}
+
+#controls button:not(#volume):hover {
+  background-color: #e0e0e0; /* 鼠标悬停时的颜色 */
+}
+
+#controls button i {
+  transform: scale(1.2);
+}
+
+.disabled button {
+  /* 當播放列表為空時按鈕的樣式 */
+  color: gray;
+  cursor: default;
+  pointer-events: none;
+}
+
+
+.disabled button::before,
+.disabled button::after {
+  border-left: 14px solid gray; /* 灰色三角形或條形 */
+}
+
+
+/* -- CONTROLS >> PLAY & PAUSE -- */
+
+/* #PlayPause {
+  position: relative;
+}
+
+.play-button::before {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 14px solid black;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+.pause-button::before, .pause-button::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 14px;
+  background-color: black;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pause-button::before {
+  left: calc(50% - 7px);
+}
+
+.pause-button::after {
+  right: calc(50% - 7px);
+} */
+
+
+/* -- CONTROLS >> REPEAT -- */
+
+#repeat {
+  position: relative;
+  border: 0;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: white;
+  color: #aaa;
+}
+
+#repeat.disabled {
+  cursor: default;
+  /* color: lightgrey; */
+}
+
+#repeat.active {
+  color: black; /* 循环播放激活时的颜色 */
+}
+
+
+/* -- CONTROLS >> VOLUME -- */
+
+#volume-container {
+  position: relative;
+}
+
+#volume {
+  position: relative;
+  border: 0;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: white;
+  z-index: 2;
+}
+
+#volume:hover, #volume-slider:hover + #volume {
+  background-color: #e0e0e0;
+}
+
+#volume.disabled {
+  color: gray;
+}
+
+#volume.volume-feedback {
+  /* 灰色透明圆圈的样式 */
+  /* box-shadow: 0 0 0 5px rgba(128, 128, 128, 0.5); */
+  background-color: rgba(128, 128, 128, 0.2);
+  /* 动画效果 */
+  transition: box-shadow 0.1s;
+}
+
+#volume-slider {
+  position: absolute;
+  left: 50%;
+  bottom: 0px;
+  transform: translateX(-50%);
+  background-color: rgba(128,128,128,0.2);
+  width: 40px;
+  height: 180px;
+  border-radius: 20px;
+  z-index: 1;
+}
+
+
+
+/* #controls.isTrackPlaying #volume:hover + #volume-slider {
+  display: block;
+} */
+
+
+#volume-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  position: absolute;
+  bottom: 100px;
+  transform: translateX(-50%) rotate(-90deg);
+  transform-origin: center;
+  width: 100px;
+  height: 5px;
+}
+
+#volume-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  background: black;
+  transform: translateY(-40%);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+#volume-slider input[type="range"]::-moz-range-thumb {
+  /* Firefox 中的样式 */
+  width: 20px;
+  height: 20px;
+  background: black;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+#volume-slider input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(to top, black 0%, black 50%, grey 50%, grey 100%);
+  /* background: green; */
+  border-radius: 5px;
+  width: 5px;
+  height: 100%;
+}
+
+#volume-slider input[type="range"]::-moz-range-track {
+  /* Firefox 中的样式 */
+  background: linear-gradient(to top, black 0%, black 50%, grey 50%, grey 100%);
+  /* background: green; */
+  border-radius: 5px;
+  width: 5px;
+  height: 100%;
+}
+
+
+/* -- PROGRESS CONTAINER -- */
+
+#progress-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 90%; /* 或者根据需要调整宽度 */
+  position: absolute;
+  bottom: 20%;
+}
+
+#progress-bar {
+  flex-grow: 0; /* 让进度条占据剩余空间 */
+  margin: 0 10px; /* 为时间标签和进度条之间提供一些空间 */
+  position: relative;
+  background-color: #ddd;
+  width: 80%;
+  height: 5px;
+}
+
+
+#progress {
+  height: 100%;
+  /* background-color: #3498db; */
+  background-color: black;
+}
+
+#slider-handle {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  /* background-color: #3498db; */
+  background-color: black;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 2;
+}
+
+#playlist {
+  /* box-sizing: border-box; */
+  height: 300px;
+  /* max-height: 310px; */
+  width: 50%;
+  overflow-y: auto;
+}
+
+#playlist.drag-over {
+  background-color: #ddd;
+}
+
+#playlist, #playlist * {
+  box-sizing: border-box;
+}
+
+#playlist ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#playlist p {
+  /* text-align: center; */
+  margin: 0;
+  padding: 10px 20px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+#playlist li {
+  margin: 0;
+  border-bottom: 1px solid #000;
+  padding: 10px 20px;
+  cursor: pointer;
+  color: #333;
+  text-align: left;
+  font-size: 16px;
+}
+
+#playlist li:not(.playing):hover {
+  /* text-decoration: underline; */
+  background-color: #eee;
+}
+
+#playlist ul li:first-child {
+  border-top-right-radius: 25px;
+}
+
+#playlist .playing {
+  /* background-color: #f0f0f0; */
+  background-color: #ddd;
+  /* letter-spacing: 0.3px; */
+  font-size: 17px;
+  font-weight: 550;
+}
+
+#playlist::-webkit-scrollbar {
+  width: 10px;
+  height: 100px;
+}
+
+#playlist::-webkit-scrollbar-thumb {
+  background-color: darkgrey;
+  border-radius: 10px;
+}
+
+#playlist::-webkit-scrollbar-track {
+  background: white;
+}
+
+.dragging {
+  opacity: 0.5; /* 拖动元素时略显透明 */
+  cursor: pointer;
+}
+
+.placeholder {
+  border: 2px dashed #ccc; /* 占位符的样式 */
+  height: same-as-li-height; /* 应与 li 元素的高度相同 */
+}
+
+/* -- LOOP-CONTAINER -- */
+#loop-speed-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px;
+  /* padding: 20px; */
+  width: 800px;
+}
+
+#loop-container input[type="number"] {
+  margin: 0 5px;
+  width: 60px;
+}
+
+.progress-non-loop {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: #ddd; /* 灰色，表示非循环区间 */
+  z-index: 1;
+}
+
+.loop-section {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* 透明黑色，表示循环区间 */
+  z-index: 2; /* 确保它位于非循环区间的上方 */
+}
+
+audio {
+  display: none;
+}
+
+table {
+  border-collapse: collapse; /* 确保框线紧凑，不会双重显示 */
+  width: 800px; /* 可根据需要调整宽度 */
+  margin: 20px;
+}
+
+th, td {
+  border: 1px solid black; /* 单元格边框 */
+  padding: 8px; /* 内边距 */
+  text-align: left; /* 文本对齐方式 */
+  width: 50%;
+}
+
+th {
+  background-color: #f2f2f2; /* 表头背景颜色，可自定义 */
+}
