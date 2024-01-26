@@ -15,9 +15,11 @@
 <div id="app" >
     <h1>Vue.js Music Player</h1>
     <div id="drop-area" @click="triggerFileInput" @dragover.prevent="handleDragOver" @drop="handleDrop" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragging }">
+    <!-- <div id="drop-area" @dragover.prevent="handleDragOver" @drop="handleDrop" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragging }"> -->
         <p>Drag and drop music files here.</p>
     </div>
-    <input type="file" id="file-input" accept="audio/*" style="display: none;" @change="handleFileSelect">
+    <!-- <input type="file" id="file-input" accept="audio/*" style="display: none;" @change="handleFileSelect"> -->
+    <input type="file" id="file-input" accept="audio/*" @change="handleFileSelect" multiple style="display: none;">
 
     
     <!-- <div id="google-drive-import">
@@ -27,7 +29,7 @@
 
     <div id="main-container">
         <div id="current-track">
-            <p v-if="currentTrack">{{ currentTrack.title }}</p>
+            <p id="current-track-title" v-if="currentTrack">{{ currentTrack.title }}</p>
             <!-- <p v-else>No tracks in playlist</p> -->
             <!-- <div id="album-art"></div> -->
             <div id="controls" ref="controls" :class="{ 'disabled': !isTrackPlaying }">
@@ -70,7 +72,7 @@
         <!-- <button id="playlist-toggle" @click="togglePlaylist">Playlist</button> -->
         <div id="playlist" v-show="isPlaylistVisible || !isMobile">
             <ul v-if="playlist.length > 0">
-              <li v-for="(track, index) in playlist" :key="index" @click="playTrack(index)"
+              <li v-for="(track, index) in playlist" :key="index" @click="playTrack(index)" v-if="track && track.title && track.url"
                 @dragstart="dragStartItem(index, $event)"
                 @dragover.prevent="dragEnterItem(index, $event)"
                 @dragend="dragEndItem"
@@ -91,7 +93,7 @@
         <input type="number" ref="loopStartInput" v-model.number="inputLoopStart" placeholder="Start from..." @keyup.enter="applyLoopSettings">
         sec to
         <input type="number" ref="loopEndInput" v-model.number="inputLoopEnd" placeholder="End with..." @keyup.enter="applyLoopSettings">sec
-        <button @click="applyLoopSettings">Enter</button>
+        <button @click="applyLoopSettings">Submit</button>
       </div>
 
       <div id="speed-container">
@@ -150,7 +152,15 @@
       </tr>
       <tr>
         <td>L</td>
-        <td>Turn up loop.</td>
+        <td>Turn on loop.</td>
+      </tr>
+      <tr>
+        <td>K/; (To the left/right of L)</td>
+        <td>Set loop start/end time to current time.</td>
+      </tr>
+      <tr>
+        <td>' (Two keys right of L)</td>
+        <td>Submit loop time.</td>
       </tr>
       <tr>
         <td>>/<</td>
