@@ -14,9 +14,10 @@
 
 <div id="app" >
     <h1>Vue.js Music Player</h1>
-    <div id="drop-area" @dragover.prevent="handleDragOver" @drop="handleDrop" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragging }">
+    <div id="drop-area" @click="triggerFileInput" @dragover.prevent="handleDragOver" @drop="handleDrop" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragging }">
         <p>Drag and drop music files here.</p>
     </div>
+    <input type="file" id="file-input" accept="audio/*" style="display: none;" @change="handleFileSelect">
 
     
     <!-- <div id="google-drive-import">
@@ -27,7 +28,7 @@
     <div id="main-container">
         <div id="current-track">
             <p v-if="currentTrack">{{ currentTrack.title }}</p>
-            <p v-else>No tracks in playlist</p>
+            <!-- <p v-else>No tracks in playlist</p> -->
             <!-- <div id="album-art"></div> -->
             <div id="controls" ref="controls" :class="{ 'disabled': !isTrackPlaying }">
               
@@ -57,15 +58,17 @@
               <div id="progress-bar" :class="{ 'disabled': !isTrackPlaying }" ref="progressBar" @click="setProgress($event)">
                 <div id="progress" v-if="isTrackPlaying" :style="{ width: progress + '%' }">
                   <!-- <div class="progress-non-loop" :style="{ width: isLoopEnabled ? loopStartPercent + '%' : progress + '%' }"></div> -->
-                  <div class="progress-non-loop" :style="{ width: shouldUpdateProgressBar ? loopStartPercent + '%' : progress + '%' }"></div>
-                  <div v-if="showLoopSection" class="loop-section" :style="{ left: loopStartPercent + '%', right: (100 - loopEndPercent) + '%' }"></div>
-                  <div id="slider-handle" v-if="isTrackPlaying" :style="{ left: progress + '%' }"></div>
+                  <!-- <div class="progress-non-loop" :style="{ width: shouldUpdateProgressBar ? loopStartPercent + '%' : progress + '%' }"></div> -->
+                  <!-- <div v-if="showLoopSection" class="loop-section" :style="{ left: loopStartPercent + '%', right: (100 - loopEndPercent) + '%' }"></div> -->
+                  <div v-if="isLoopEnabled" class="loop-section" :style="{ left: loopStartPercent + '%', right: (100 - loopEndPercent) + '%' }"></div>
+                  <div id="progress-slider" v-if="isTrackPlaying" :style="{ left: progress + '%' }" :class="{ 'progress-slider-loop': isLoopEnabled }"></div>
                 </div>
               </div>
               <span>{{ formattedDuration }}</span>
             </div>
         </div>
-        <div id="playlist">
+        <!-- <button id="playlist-toggle" @click="togglePlaylist">Playlist</button> -->
+        <div id="playlist" v-show="isPlaylistVisible || !isMobile">
             <ul v-if="playlist.length > 0">
               <li v-for="(track, index) in playlist" :key="index" @click="playTrack(index)"
                 @dragstart="dragStartItem(index, $event)"
@@ -74,6 +77,7 @@
                 draggable="true"
                 :class="{ 'playing': index === currentTrackIndex, 'dragging': draggingItemIndex === index }" >
                 {{ track.title }}
+                <span class="remove-track" @click.stop="removeTrack(index)">×</span>
               </li>
             </ul>
             <p v-else>No tracks in the playlist.</p>
@@ -84,9 +88,9 @@
       <div id="loop-container">
         <input type="checkbox" id="enable-loop" v-model="isLoopEnabled">
         <label for="enable-loop">Loop: </label>
-        <input type="number" ref="loopStartInput" v-model.number="inputLoopStart" placeholder="Start from...">
-        to
-        <input type="number" ref="loopEndInput" v-model.number="inputLoopEnd" placeholder="End with...">
+        <input type="number" ref="loopStartInput" v-model.number="inputLoopStart" placeholder="Start from..." @keyup.enter="applyLoopSettings">
+        sec to
+        <input type="number" ref="loopEndInput" v-model.number="inputLoopEnd" placeholder="End with..." @keyup.enter="applyLoopSettings">sec
         <button @click="applyLoopSettings">Enter</button>
       </div>
 
@@ -107,7 +111,7 @@
 
     <!-- <audio controls ref="audioPlayer" @timeupdate="handleTimeUpdate" @durationchange="updateLoopPercentages"> -->
       <audio controls ref="audioPlayer" @timeupdate="handleTimeUpdate">
-        <source :src="currentTrack.url" type="audio/mp3">
+        <source :src="currentTrack ? currentTrack.url : ''" type="audio/mp3">
         Your browser does not support the audio tag.
     </audio>
 
@@ -118,7 +122,7 @@
       </tr>
       <tr>
         <td>Space</td>
-        <td>Play/Pause</td>
+        <td>Play/Pause.</td>
       </tr>
       <tr>
         <td>&larr; &rarr;</td>
@@ -127,6 +131,10 @@
       <tr>
         <td>&uarr; &darr;</td>
         <td>Increase/Decrease volume 5%.</td>
+      </tr>
+      <tr>
+        <td>M</td>
+        <td>Mute.</td>
       </tr>
       <tr>
         <td>Shift+P / Shift+N</td>
