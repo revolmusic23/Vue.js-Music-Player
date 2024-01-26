@@ -218,10 +218,7 @@ html, body, #app {
 }
 
 #volume.volume-feedback {
-  /* 灰色透明圆圈的样式 */
-  /* box-shadow: 0 0 0 5px rgba(128, 128, 128, 0.5); */
   background-color: rgba(128, 128, 128, 0.2);
-  /* 动画效果 */
   transition: box-shadow 0.1s;
 }
 
@@ -236,6 +233,8 @@ html, body, #app {
   border-radius: 20px;
   z-index: 1;
 }
+
+
 
 
 
@@ -318,13 +317,14 @@ html, body, #app {
   height: 100%;
   /* background-color: #3498db; */
   background-color: black;
+  width: 0%;
+  z-index: 1.5;
 }
 
-#slider-handle {
+#progress-slider {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  /* background-color: #3498db; */
   background-color: black;
   position: absolute;
   top: 50%;
@@ -333,10 +333,12 @@ html, body, #app {
   z-index: 2;
 }
 
+#progress-slider.progress-slider-loop {
+  background-color: #0275FF; /* 循环状态下的颜色 */
+}
+
 #playlist {
-  /* box-sizing: border-box; */
   height: 300px;
-  /* max-height: 310px; */
   width: 50%;
   overflow-y: auto;
 }
@@ -374,6 +376,16 @@ html, body, #app {
   color: #333;
   text-align: left;
   font-size: 16px;
+  position: relative;
+}
+
+.remove-track {
+  position: absolute;
+  right: 10px; /* 或者根據您的佈局需要調整 */
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  /* 可以添加額外的樣式以美化叉叉 */
 }
 
 #playlist li:not(.playing):hover {
@@ -443,7 +455,8 @@ html, body, #app {
   position: absolute;
   top: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5); /* 透明黑色，表示循环区间 */
+  /* background-color: rgba(0, 0, 0, 0.5); */
+  background-color: #0275FF;
   z-index: 2; /* 确保它位于非循环区间的上方 */
 }
 
@@ -466,4 +479,77 @@ th, td {
 
 th {
   background-color: #f2f2f2; /* 表头背景颜色，可自定义 */
+}
+
+
+@media (max-width: 600px) {
+  html, body, #app {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    /* justify-content: center; */
+    align-items: center;
+    background-color: #ddd;
+  }
+
+  #drop-area {
+    border: 2px dashed #ccc;
+    box-sizing: border-box;
+    padding: 20px;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    width: 100%;
+    /* width: 400px; */
+    font-size: 20px;
+    margin-bottom: 20px;
+    background-color: white;
+    border-radius: 0px;
+  }
+
+  #main-container {
+    width: 100%;
+    /* height: 300px; */
+    border: 1px solid #000;
+    border-radius: 0;
+    background-color: white;
+  
+    box-sizing: border-box;
+    display: block;
+    /* display: flex; */
+    /* flex-direction: column; */
+    /* height: 100%; */
+  }
+
+  #current-track {
+    height: 400px;
+    width: 100%;
+  }
+
+  #playlist {
+    height: 50%;
+    width: 100%;
+    border: 1px solid #000;
+  }
+
+  #loop-speed-container {
+    display: block;
+    width: 100%;
+  }
+
+  table {
+    display: none;
+  }
+
+  #playlist {
+    display: none;
+}
+
+  #playlist-toggle {
+      display: block; /* 显示播放列表切换按钮 */
+      /* 其他样式，如位置、大小、图标等 */
+  }
 }
