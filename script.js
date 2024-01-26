@@ -40,40 +40,72 @@ new Vue({
     },
 
     handleDrop(event) {
-      // Handle file drop...
       event.preventDefault();
       this.isDragging = false;
 
       const files = event.dataTransfer.files;
-      this.handleFiles(files);
-    },
+      if (files) {
+        for (let i = 0; i < files.length; i++) {
+          const fileType = files[i].name.split('.').pop().toLowerCase();
+          const acceptedFormats = ['mp3', 'wav', 'ogg', 'aac', 'flac'];
 
-    handleDragLeave() {
-      // Handle drag leave...
-      this.isDragging = false;
-    },
-
-    handleFiles(files) {
-      // Handle file processing...
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.type.startsWith('audio/')) {
-          this.addToPlaylist(file);
+          if (files[i].type.startsWith('audio/') && acceptedFormats.includes(fileType)) {
+            this.addToPlaylist(files[i]);
+          } else {
+            console.warn('Skipped non-audio file:', files[i].name);
+          }
         }
       }
     },
 
+    handleDragLeave(event) {
+      // Handle drag leave...
+      event.preventDefault();
+      this.isDragging = false;
+    },
+
+    // handleFiles(files) {
+    //   for (let i = 0; i < files.length; i++) {
+    //     const file = files[i];
+    //     if (file.type.startsWith('audio/')) {
+    //       this.addToPlaylist(file);
+    //     }
+    //   }
+    // },
+
+    triggerFileInput() {
+      document.getElementById('file-input').click();
+    },
+    
+    handleFileSelect(event) {
+      const files = event.target.files;
+      if (files) {
+        for (let i = 0; i < files.length; i++) {
+          this.addToPlaylist(files[i]);
+        }
+      }
+      event.target.value = null;
+    },
+
     // -- PLAYLIST & TRACK METHODS --
     addToPlaylist(file) {
-      // Add to playlist...
-      let title = file.name;
-      const lastDotIndex = title.lastIndexOf('.');
-      if (lastDotIndex > -1) {
-        title = title.substring(0, lastDotIndex);
-      }
+      const fileType = file.name.split('.').pop().toLowerCase();
+      const acceptedFormats = ['mp3', 'wav', 'ogg', 'aac', 'flac'];
 
-      const url = URL.createObjectURL(file);
-      this.playlist.push({ title, url });
+      if (file.type.startsWith('audio/') && acceptedFormats.includes(fileType)) {
+        let title = file.name;
+        const url = URL.createObjectURL(file);
+        const lastDotIndex = title.lastIndexOf('.');
+    
+        if (lastDotIndex > -1) {
+          title = title.substring(0, lastDotIndex);
+        }
+        this.playlist.push({ title, url });
+
+      } else {
+        console.warn('File skipped (not a supported audio format):', file.name);
+      }
+      
       // this.playlist.push({ title: 'New Track', url: link });
     },
 
@@ -120,10 +152,12 @@ new Vue({
     },
   
     removeTrack(index) {
+      console.log('Removing track at index:', index);
       const wasPlaying = index === this.currentTrackIndex;
       this.playlist.splice(index, 1);
 
       if (wasPlaying) {
+        console.log('Removing currently playing track.');
           if (this.playlist.length > 0) {
               if (index === this.playlist.length) {
                   this.playTrack(0);
@@ -440,6 +474,15 @@ new Vue({
       else if (event.key.toLowerCase() === 'm') {
         this.toggleMute();
       }
+      else if (event.key.toLowerCase() === 'k') {
+        this.inputLoopStart = this.currentTime;
+      }
+      else if (event.key === ';') {
+        this.inputLoopEnd = this.currentTime;
+      }
+      else if (event.key === "'") {
+        this.applyLoopSettings();
+      }
     },
 
     initializeSlider() {
@@ -508,14 +551,6 @@ new Vue({
 
     checkDeviceType() {
       this.isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    },
-    triggerFileInput() {
-      if (this.isMobileDevice) {
-        document.getElementById('file-input').click();
-      }
-    },
-    handleFileSelect(event) {
-      // ... 處理文件選擇 ...
     },
  
     togglePlaylist() {
