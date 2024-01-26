@@ -5,7 +5,7 @@ new Vue({
     currentTrack: '',
     googleDriveLink: '',
     isDragging: false,
-    isPlaying: false,  // 確保這裡聲明了 isPlaying
+    isPlaying: false,
     progress: 0,
     audioReady: false,
     currentTrackIndex: -1, // 初始為 -1，表示沒有播放任何曲目
@@ -22,10 +22,15 @@ new Vue({
     showLoopSection: false,
     shouldUpdateProgressBar: false,
     loopStart: 0,
-    loopEnd: 100,
+    loopEnd: 0,
     inputLoopStart: 0,
-    inputLoopEnd: 100,
-    playbackSpeed: "1"
+    inputLoopEnd: 0,
+    playbackSpeed: "1",
+    
+    // MOBILE DEVICE
+    isMobileDevice: false,
+    isPlaylistVisible: false,
+    isMobile: false
   },
   methods: {
 
@@ -115,15 +120,38 @@ new Vue({
     },
   
     removeTrack(index) {
-      // Remove a track...
+      const wasPlaying = index === this.currentTrackIndex;
       this.playlist.splice(index, 1);
-      if (this.playlist.length === 0) {
-        this.currentTrack = '';
-      } else if (index === this.playlist.length) {
-        this.currentTrack = this.playlist[index - 1].url;
-      } else {
-        this.currentTrack = this.playlist[index].url;
+
+      if (wasPlaying) {
+          if (this.playlist.length > 0) {
+              if (index === this.playlist.length) {
+                  this.playTrack(0);
+              } else {
+                  this.playTrack(index);
+              }
+          }
+          else { // 如果播放列表空了
+              this.stopPlayback(); // 停止播放並重置播放器
+          }
+      } 
+      else if (index < this.currentTrackIndex) {
+          // 若刪除的歌曲在正在播放的歌曲前面
+          this.currentTrackIndex--;
       }
+    },
+
+    stopPlayback() {
+      const audioPlayer = this.$refs.audioPlayer;
+          if (audioPlayer) {
+              audioPlayer.pause();
+              audioPlayer.currentTime = 0;
+              audioPlayer.src = '';
+          }
+          this.currentTrack = null;
+          this.isPlaying = false;
+          this.duration = 0;
+          this.isTrackPlaying = false;
     },
 
     // -- AUDIO CONTROLS METHODS --
@@ -187,17 +215,15 @@ new Vue({
     },
 
     // -- PROGRESS BAR METHODS --
-    updateProgressBar() {
-      if (this.$refs.audioPlayer) {
-        const currentTime = this.$refs.audioPlayer.currentTime;
-        const duration = this.$refs.audioPlayer.duration;
-        this.progress = (currentTime / duration) * 100;
-      }
-      if (this.$refs.audioPlayer && this.shouldUpdateProgressBar) {
-        // 更新进度条逻辑...
-        this.shouldUpdateProgressBar = false; // 更新完成后重置标志
-      }
-    },
+    // updateProgressBar() {
+    //   if (this.$refs.audioPlayer) {
+    //     const currentTime = this.$refs.audioPlayer.currentTime;
+    //     const duration = this.$refs.audioPlayer.duration;
+    //     this.progress = (currentTime / duration) * 100;
+    //     console.log("Progress updated:", this.progress); // 用於調試
+    //   }
+    //   console.log("Progress updated:", this.progress);
+    // },
 
     setProgress(event) {
       if (!this.isTrackPlaying) {
@@ -366,9 +392,9 @@ new Vue({
     // -- KEY DOWN --
 
     handleKeydown(event) {
-      if (document.activeElement === this.$refs.loopStartInput || document.activeElement === this.$refs.loopEndInput) {
-        // 如果是，则不执行任何操作
-        return;
+      // 检查是否聚焦在输入框，并且按键不是'L'或'l'
+      if ((document.activeElement === this.$refs.loopStartInput || document.activeElement === this.$refs.loopEndInput) && event.key.toLowerCase() !== 'l') {
+        return; // 如果是，则不执行任何操作，除非按下的是'L'键
       }
 
       if (event.key === 'ArrowRight') {
@@ -410,6 +436,9 @@ new Vue({
       }
       else if (event.key === 'P' && event.shiftKey) {
         this.playPrevious();
+      }
+      else if (event.key.toLowerCase() === 'm') {
+        this.toggleMute();
       }
     },
 
@@ -476,14 +505,28 @@ new Vue({
     dragEndItem() {
       this.draggingItemIndex = -1;
     },
- 
 
+    checkDeviceType() {
+      this.isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    },
+    triggerFileInput() {
+      if (this.isMobileDevice) {
+        document.getElementById('file-input').click();
+      }
+    },
+    handleFileSelect(event) {
+      // ... 處理文件選擇 ...
+    },
+ 
+    togglePlaylist() {
+      this.isPlaylistVisible = !this.isPlaylistVisible; // 切换播放列表的显示状态
+    }
     
   },
   computed: {
     isPlaying() {
       return this.$refs.audioPlayer && !this.$refs.audioPlayer.paused;
-    },
+  },
     formattedCurrentTime() {
       return this.formatTime(this.currentTime);
     },
@@ -512,15 +555,18 @@ new Vue({
 
   mounted() {
     this.$nextTick(() => {
-      
       if (this.$refs.audioPlayer) {
+        // this.$refs.audioPlayer.addEventListener('timeupdate', this.updateProgressBar);
+        this.$refs.audioPlayer.addEventListener('timeupdate', () => {
+          this.updateProgressBar();
+        });
         this.$refs.audioPlayer.addEventListener('play', () => {
           this.isPlaying = true;  // 當音樂播放時設置 isPlaying 為 true
         });
         this.$refs.audioPlayer.addEventListener('pause', () => {
           this.isPlaying = false;  // 當音樂暫停時設置 isPlaying 為 false
         });
-        this.$refs.audioPlayer.addEventListener('timeupdate', this.updateProgressBar);
+        
         this.$refs.audioPlayer.addEventListener('durationchange', () => {
           this.duration = this.$refs.audioPlayer.duration;
         });
@@ -540,6 +586,7 @@ new Vue({
       this.initializeSlider();
       window.addEventListener('keydown', this.handleKeydown);
     });
+    this.checkDeviceType();
   },
 
   beforeDestroy() {
